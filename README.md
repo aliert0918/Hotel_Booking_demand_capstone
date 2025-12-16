@@ -1,18 +1,18 @@
-# 🏨 Minimizing Revenue Loss: Hotel Booking Cancellation Prediction
+# Minimizing Revenue Loss: Hotel Booking Cancellation Prediction
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Library-Scikit--Learn-orange)](https://scikit-learn.org/)
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://hotelbookingdemandcapstone-hpslxcled9w5yfvcfmamjw.streamlit.app/)
 [![Status](https://img.shields.io/badge/Status-Completed-green)]()
 
-## 📌 Project Overview
+## Project Overview
 High cancellation rates significantly impact hotel revenue, leading to **Revenue Leakage** (empty rooms) or **Opportunity Loss** (turning away potential guests). This project utilizes Machine Learning to predict booking cancellations (`is_canceled`), enabling the hotel to implement a dynamic overbooking strategy.
 
 **Key Achievement:** The optimized model successfully reduced potential revenue loss by approximately **63%**, translating to a saving of **~$775,650**.
 
 ---
 
-## 💼 Business Understanding
+## Business Understanding
 
 ### The Problem
 *   **Inventory Spoilage:** Rooms remain empty due to last-minute cancellations (Revenue Leakage).
@@ -29,7 +29,7 @@ High cancellation rates significantly impact hotel revenue, leading to **Revenue
 
 ---
 
-## 📊 Data & Preprocessing
+## Data & Preprocessing
 
 The dataset consists of **83,573 rows** and **11 columns**, covering booking details, customer demographics, and reservation status.
 
@@ -50,7 +50,7 @@ The dataset consists of **83,573 rows** and **11 columns**, covering booking det
 
 ---
 
-## 🤖 Modeling Strategy
+## Modeling Strategy
 
 We employed **Ensemble Learning** to handle complex, non-linear patterns in the data.
 
@@ -67,7 +67,7 @@ Instead of the default 0.5 threshold, we tuned the decision boundary to **0.27**
 
 ---
 
-## 💰 Business Impact Evaluation
+## Business Impact Evaluation
 
 We simulated the financial impact on a test set using the following cost matrix:
 *   **Cost of False Negative (Empty Room):** $200
@@ -83,7 +83,7 @@ We simulated the financial impact on a test set using the following cost matrix:
 
 ---
 
-## 💡 Recommendations
+## Recommendations
 
 Based on the analysis, we recommend the following strategies:
 
@@ -98,11 +98,11 @@ Based on the analysis, we recommend the following strategies:
 
 ---
 
-## 🛠 Tools & Libraries
+## Tools & Libraries
 *   **Language:** Python
 *   **Data Manipulation:** Pandas, NumPy
 *   **Visualization:** Matplotlib, Seaborn
-*   **Machine Learning:** Scikit-Learn (Bagging, Decision Tree, GridSearch), Imbalanced-Learn
+*   **Machine Learning:** Scikit-Learn (Bagging, Decision Tree, RandomizedSearchCV), Imbalanced-Learn
 *   **Interpretability:** SHAP
 
 ---
