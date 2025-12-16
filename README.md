@@ -2,6 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Library-Scikit--Learn-orange)](https://scikit-learn.org/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://hotelbookingdemandcapstone-hpslxcled9w5yfvcfmamjw.streamlit.app/)
 [![Status](https://img.shields.io/badge/Status-Completed-green)]()
 
 ## 📌 Project Overview
