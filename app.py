@@ -5,10 +5,11 @@ import joblib
 import lime
 import lime.lime_tabular
 import matplotlib.pyplot as plt
+import ast # For safely evaluating list strings
 
 # --- 0. HARDCODED DATA (Menggantikan file .txt dan .csv) ---
 
-# [cite_start]Konten dari column_names.txt [cite: 1]
+# Konten dari column_names.txt
 FEATURE_NAMES = [
     'country', 'market_segment', 'previous_cancellations', 'booking_changes', 
     'deposit_type', 'days_in_waiting_list', 'customer_type', 'reserved_room_type', 
@@ -16,7 +17,7 @@ FEATURE_NAMES = [
     'is_high_risk', 'country_group', 'commitment_score', 'booking_stability'
 ]
 
-# [cite_start]Konten dari kolom_kategori_unique_values.csv [cite: 3]
+# Konten dari kolom_kategori_unique_values.csv
 CAT_OPTIONS = {
     'market_segment': ['Offline TA/TO', 'Online TA', 'Direct', 'Groups', 'Corporate', 'Complementary', 'Aviation', 'Other'],
     'deposit_type': ['No Deposit', 'Non Refund', 'Refundable'],
@@ -28,7 +29,7 @@ CAT_OPTIONS = {
     'is_high_risk': [0, 1]
 }
 
-# [cite_start]Konten dari kolom_numerik_range.csv (min/max) [cite: 2]
+# Konten dari kolom_numerik_range.csv (min/max)
 NUM_RANGES = {
     'commitment_score': (0.0, 21.0),
     'booking_stability': (-39.1, 21.0),
@@ -46,10 +47,10 @@ NUM_RANGES = {
 st.set_page_config(page_title="Hotel Cancellation Predictor", layout="wide")
 
 
-# --- 2. ROBUST DATA LOADING ---
+# --- 2. MODEL LOADING ---
 @st.cache_resource
 def load_resources(model_path):
-    """Memuat model dan mengembalikan data yang sudah di-hardcode."""
+    """Memuat model dari file PKL."""
     try:
         model = joblib.load(model_path)
     except FileNotFoundError:
@@ -104,6 +105,7 @@ def get_lime_explainer(_model, _feature_names):
             val_to_idx = {v: k for k, v in enumerate(unique_vals)}
             train_encoded[col] = train_df[col].map(lambda x: val_to_idx.get(x, 0)) # Map string to int index
 
+    # LIME Initialization: Menghapus 'training_data_stats' untuk mengatasi error 'Missing keys'
     explainer = lime.lime_tabular.LimeTabularExplainer(
         training_data=train_encoded.to_numpy(),
         feature_names=_feature_names,
@@ -112,8 +114,7 @@ def get_lime_explainer(_model, _feature_names):
         categorical_names=categorical_names,
         mode='classification',
         verbose=False,
-        # Menggunakan data points median sebagai rata-rata
-        training_data_stats={'means': train_encoded.median().values} 
+        # LIME akan menghitung means, stds, dll. secara otomatis dari training_data
     )
     return explainer, categorical_names
 
@@ -241,7 +242,7 @@ if st.button("🚀 Predict Cancellation", type="primary", use_container_width=Tr
                 temp_df = pd.DataFrame(np_array, columns=feature_names)
                 
                 for i, col in enumerate(feature_names):
-                    if i in lime_cat_names:
+                    if col in CAT_OPTIONS:
                         mapping = lime_cat_names[i]
                         # Convert LIME's float index back to original string value
                         temp_df[col] = temp_df[col].apply(
