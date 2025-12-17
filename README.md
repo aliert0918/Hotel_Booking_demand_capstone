@@ -1,4 +1,4 @@
-# Minimizing Revenue Loss: Hotel Booking Cancellation Prediction
+# Minimizing Revenue Loss: Strategic Prediction of Hotel Booking Cancellation Prediction
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Library-Scikit--Learn-orange)](https://scikit-learn.org/)
@@ -6,95 +6,82 @@
 [![Status](https://img.shields.io/badge/Status-Completed-green)]()
 
 ## Project Overview
-High cancellation rates significantly impact hotel revenue, leading to **Revenue Leakage** (empty rooms) or **Opportunity Loss** (turning away potential guests). This project utilizes Machine Learning to predict booking cancellations (`is_canceled`), enabling the hotel to implement a dynamic overbooking strategy.
+Hotel rooms are **perishable inventory**. Jika kamar kosong pada malam tertentu akibat pembatalan mendadak, pendapatan dari kamar tersebut hilang selamanya (*Revenue Leakage*).
 
-**Key Achievement:** The optimized model successfully reduced potential revenue loss by approximately **63%**, translating to a saving of **~$775,650**.
+Proyek ini bertujuan membangun model **Machine Learning (Classification)** untuk memprediksi apakah seorang tamu akan membatalkan pesanan (`is_canceled = 1`). Dengan prediksi ini, manajemen hotel dapat menerapkan strategi **Aggressive Overbooking** yang terukur untuk memaksimalkan **Occupancy Rate** dan **Revenue**.
 
----
+### Business Problem
+- **Inventory Spoilage (Kamar Kosong):** Hotel menahan kamar untuk tamu yang ternyata batal. Kerugian: **~$200** (High Season Opportunity Cost).
+- **Inventory Spill (Overbooking):** Hotel menjual kamar terlalu banyak, tamu datang semua, hotel harus memindahkan tamu (*Walk the Guest*). Biaya: **~$75** (Kompensasi & Transport).
 
-## Business Understanding
-
-### The Problem
-*   **Inventory Spoilage:** Rooms remain empty due to last-minute cancellations (Revenue Leakage).
-*   **Inventory Spill:** Hotel plays it too safe and refuses bookings, missing out on potential revenue (Opportunity Loss).
-
-### Goal & Metric
-*   **Objective:** Minimize **False Negatives** (Predicting guest will come, but they cancel).
-*   **Primary Metric:** **F2-Score**. We prioritize **Recall** because the cost of an empty room (~$200) is significantly higher than the cost of overbooking (~$75).
-
-### Stakeholders
-*   **Revenue Manager:** Strategic inventory planning.
-*   **Front Office:** Operational execution (guest handling).
-*   **Reservation Team:** Booking validation.
+**Strategic Decision:** Karena biaya *False Negative* (Kamar Kosong) **2.7x lebih mahal** daripada *False Positive* (Overbooking), model ini dioptimalkan untuk **Recall** (menangkap potensi batal seagresif mungkin) menggunakan **F2-Score** dan **Threshold Tuning**.
 
 ---
 
-## Data & Preprocessing
+## Dataset & Features
+Dataset terdiri dari **83.573 baris** data transaksi pemesanan hotel (CRM) dengan 11 fitur utama.
 
-The dataset consists of **83,573 rows** and **11 columns**, covering booking details, customer demographics, and reservation status.
-
-### Pipeline Steps:
-1.  **Data Cleaning:**
-    *   Handled missing values in `country` and `market_segment`.
-    *   Kept duplicates (assumed as valid separate transactions/group bookings).
-2.  **Feature Engineering:**
-    *   Created `commitment_score`: A composite score of special requests & parking needs.
-    *   Created `is_repeat_canceler` & `is_high_risk`: To flag risky behaviors.
-3.  **Transformation:**
-    *   **Numerical:** RobustScaler (to handle outliers in `lead_time`).
-    *   **Categorical:** One-Hot Encoding.
-
-### Key EDA Insight
-> **"Online TA has the highest cancellation rate."**
-> Guests from Online Travel Agents demand instant certainty and are prone to cancel, whereas Direct bookings show high loyalty (lowest cancellation rate: 12.5%).
+| Feature | Description |
+| :--- | :--- |
+| `country` | Negara asal tamu (High Cardinality). |
+| `market_segment` | Channel pemesanan (Online TA, Offline TA, Direct, Corporate, dll). |
+| `deposit_type` | Tipe deposit (No Deposit, Non Refund, Refundable). |
+| `previous_cancellations` | Jumlah pembatalan historis oleh tamu. |
+| `booking_changes` | Jumlah perubahan yang dilakukan pada booking. |
+| `days_in_waiting_list` | Lama hari booking berada di waiting list. |
+| `total_of_special_requests` | Jumlah permintaan khusus (bantal tambahan, view, dll). |
+| `is_canceled` | **Target Variable** (1 = Cancel, 0 = Not Cancel). |
 
 ---
 
-## Modeling Strategy
+## Methodology
 
-We employed **Ensemble Learning** to handle complex, non-linear patterns in the data.
+### 1. Data Preprocessing
+- **Missing Values:** Mengisi `country` yang kosong dengan "Other" (menghindari bias modus).
+- **Handling Duplicates:** Data duplikat dipertahankan (karena tidak ada Unique ID dan transaksi identik dianggap valid).
+- **Cardinality Reduction:** Mengelompokkan negara menjadi `PRT` (Portugal), `Top_International`, dan `Other`.
 
-### Champion Model: Bagging Classifier
-*   **Why?** To reduce variance and improve stability compared to a single Decision Tree.
-*   **Configuration:**
-    *   Base Estimator: Decision Tree with `class_weight='balanced'`.
-    *   Optimization: **RandomizedSearchCV** to find the best hyperparameters.
+### 2. Feature Engineering (Key Innovation)
+Fitur baru diciptakan untuk menangkap "Niat & Risiko" tamu:
+- **`commitment_score`**: Gabungan dari *Special Requests* + *Parking* + *Booking Changes*. (Skor tinggi = Niat menginap kuat).
+- **`is_high_risk`**: *Flagging* tamu dengan deposit 'Non Refund' (tapi bukan Corporate) atau yang punya riwayat cancel.
+- **`booking_stability`**: Mengukur kestabilan pesanan berdasarkan perubahan vs durasi waiting list.
 
-### Strategic Move: Threshold Optimization
-Instead of the default 0.5 threshold, we tuned the decision boundary to **0.27**.
-*   **Impact:** The model became "aggressive" in detecting cancellations.
-*   **Result:** Significantly reduced False Negatives (Empty Rooms).
+### 3. Model Selection
+Membandingkan beberapa algoritma (Logistic Regression, KNN, Decision Tree, XGBoost, dll).
+- **Chosen Model:** **Bagging Classifier** (Base Estimator: Decision Tree).
+- **Why?** Memberikan performa **F2-Score** tertinggi dan paling stabil (Low Variance) dibandingkan Single Decision Tree.
+
+### 4. Threshold Optimization
+Alih-alih menggunakan batas standar 0.50, kami melakukan *tuning* ambang batas probabilitas.
+- **New Threshold:** **0.27**
+- **Impact:** Jika model mendeteksi probabilitas batal > 27%, sistem langsung menandainya sebagai "Prediksi Batal". Ini meningkatkan sensitivitas terhadap risiko *No-Show*.
 
 ---
 
-## Business Impact Evaluation
+## Key Insights (EDA & SHAP)
+Berdasarkan analisis data dan *Model Explainability* (SHAP):
+1.  **Online TA Risk:** Booking via *Online Travel Agent* yang masuk *waiting list* memiliki tingkat pembatalan hampir **100%**.
+2.  **Commitment Score:** Tamu yang "merepotkan" (banyak request/ubah booking) justru lebih **loyal** dan jarang membatalkan.
+3.  **Deposit Paradox:** Tipe deposit *Non-Refund* pada dataset ini justru memiliki tingkat cancel tinggi (kemungkinan promo murah yang ditinggalkan tamu).
 
-We simulated the financial impact on a test set using the following cost matrix:
-*   **Cost of False Negative (Empty Room):** $200
-*   **Cost of False Positive (Overbooking/Walk Cost):** $75
+---
 
-| Scenario | False Negative (Empty Rooms) | False Positive (Overbooked) | Total Estimated Loss |
-| :--- | :---: | :---: | :---: |
-| **Without Model** | 6,156 | 0 | **$1,231,200** |
-| **With Tuned Model** | 339 | 5,170 | **$455,550** |
-| **TOTAL SAVINGS** | - | - | **$775,650 (~63%)** |
+## Business Impact Analysis
+Simulasi dilakukan pada data test (16,715 booking) dengan asumsi biaya FN=\$200 dan FP=\$75.
 
-> **Conclusion:** Implementing the model saves the hotel over **$775k** compared to having no prediction strategy.
+| Skenario | Deskripsi | Estimasi Kerugian |
+| :--- | :--- | :--- |
+| **Without Model** | Pasif (anggap semua tamu datang). Banyak kamar kosong. | **-$1,231,200** |
+| **With Tuned Model** | Agresif (prediksi batal & jual ulang kamar). | **-$455,550** |
+| **TOTAL SAVING** | **Potensi Pendapatan yang Diselamatkan** | **+$775,650 (~63%)** |
 
 ---
 
 ## Recommendations
-
-Based on the analysis, we recommend the following strategies:
-
-1.  **Aggressive Overbooking (High Season):**
-    *   When demand > $150/night, use the model to resell rooms predicted to cancel. The risk of overbooking is far cheaper than the loss of an empty room.
-2.  **CRM Integration ("Soft Confirmation"):**
-    *   Trigger automated WhatsApp/Email confirmations for bookings flagged as "High Risk" 3-7 days prior to arrival.
-3.  **Conservative Strategy (Low Season):**
-    *   When rates are low (<$80), increase the prediction threshold to avoid unnecessary walk costs.
-4.  **Policy Adjustment:**
-    *   Eliminate "Waiting List" option for Online TA channels as they have a ~100% cancellations rate on waitlists.
+1.  **High Season Strategy:** Terapkan *Aggressive Overbooking*. Risiko membayar kompensasi jauh lebih kecil dibanding membiarkan kamar kosong saat harga tinggi.
+2.  **Soft Confirmation:** Gunakan prediksi model untuk mengirim pesan otomatis (WhatsApp/Email) kepada tamu berisiko tinggi 3-7 hari sebelum kedatangan untuk konfirmasi ulang.
+3.  **Operational Policy:** Hilangkan opsi *waiting list* untuk channel **Online TA** karena konversinya sangat rendah.
 
 ---
 
