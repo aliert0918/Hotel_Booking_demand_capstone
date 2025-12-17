@@ -94,7 +94,7 @@ Based on the analysis, we recommend the following strategies:
 3.  **Conservative Strategy (Low Season):**
     *   When rates are low (<$80), increase the prediction threshold to avoid unnecessary walk costs.
 4.  **Policy Adjustment:**
-    *   Eliminate "Waiting List" option for Online TA channels as they have a ~100% churn rate on waitlists.
+    *   Eliminate "Waiting List" option for Online TA channels as they have a ~100% cancellations rate on waitlists.
 
 ---
 
